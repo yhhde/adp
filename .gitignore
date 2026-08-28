@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+experiments/
+condor_logs/
+wandb/
+output.log
+
+_untracked/
+legacy/

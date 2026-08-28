@@ -1,0 +1,43 @@
+# ==============================================================================
+# adp.sub — HTCondor submit file: one job per (config, seed) pair.
+#
+#   condor_submit adp.sub
+#
+# Use this when several GPUs are available: each (config index, seed) pair is
+# its own job, so configs run in parallel. The grid is unpacked inside
+# run_adp.sh from $(Process):
+#   index = Process % N_CONFIGS
+#   seed  = SEEDS[ Process / N_CONFIGS ]
+# With 8 configs x 1 seed = 8 jobs (Process 0-7), so `queue 8` below. To run
+# more seeds, list them in `seeds` and bump `queue` to configs x seeds.
+#
+# For the single-node serial alternative (one job = the whole sweep), see
+# adp_batch.sub. The two files share the same log naming, resources and
+# output-dir convention, so either can launch the same sweep.
+#
+# NOTE (HTCondor rule): submit files only support FULL-LINE `#` comments.
+# Never put a trailing comment on a line that defines a value.
+# Values must not contain unescaped double quotes.
+# ==============================================================================
+
+universe = vanilla
+executable = run_adp.sh
+
+# args: config output_dir seeds $(Process)
+# $USER is left literal here so it expands per-user on the execute node
+# (run_adp.sh eval-expands OUTPUT_DIR and derives USER if unset).
+seeds = 42
+arguments = configs/experiments.jsonl /scratch/$USER/adp_final $(seeds) $(Process)
+
+# Logs use the same naming scheme as adp_batch.sub.
+output = condor_logs/adp_$(Cluster)_$(Process).out
+error  = condor_logs/adp_$(Cluster)_$(Process).err
+log    = condor_logs/adp_$(Cluster).log
+
+request_memory = 32GB
+request_cpus = 8
+request_gpus = 1
+should_transfer_files = NO
+
+# Jobs are owned by the schedd and keep running after terminal disconnect.
+queue 8

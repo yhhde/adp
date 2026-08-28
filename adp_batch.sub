@@ -1,0 +1,34 @@
+# ==============================================================================
+# adp_batch.sub — HTCondor submit file: whole sweep serially on ONE node.
+#
+#   condor_submit adp_batch.sub
+#
+# Use this when the account is limited to one concurrent job: a single job
+# holds one GPU node and runs every config back-to-back via run_all.sh, so
+# configs never wait on the scheduler.
+#
+# For the parallel alternative (one job per (config, seed) pair), see
+# adp.sub. The two files share the same log naming, resources and output-dir
+# convention, so either can launch the same sweep.
+#
+# Same HTCondor rules as adp.sub: full-line `#` comments only, no trailing
+# comments, no double quotes inside values.
+# ==============================================================================
+
+universe = vanilla
+executable = run_all.sh
+
+# args: config output_dir seeds device
+arguments = configs/experiments.jsonl /scratch/$USER/adp_final 42 0
+
+# Logs use the same naming scheme as adp.sub.
+output = condor_logs/adp_$(Cluster)_$(Process).out
+error  = condor_logs/adp_$(Cluster)_$(Process).err
+log    = condor_logs/adp_$(Cluster).log
+
+request_memory = 32GB
+request_cpus = 8
+request_gpus = 1
+should_transfer_files = NO
+
+queue
